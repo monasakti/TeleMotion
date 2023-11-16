@@ -1,0 +1,66 @@
+from machine import Pin
+import time
+import urequests
+
+# tele
+# Replace 'YOUR_BOT_TOKEN' with your Telegram bot token
+BOT_TOKEN = 'TOKEN BOT'
+# Replace 'YOUR_CHAT_ID' with your chat ID (you can get it by messaging the BotFather with the command /get_id)
+CHAT_ID = 'CHAT ID'
+
+# pin
+# Define the GPIO pin connected to the OUT pin of the PIR sensor
+pir_sensor_pin = machine.Pin(10, machine.Pin.IN)
+
+def connect():
+    import network
+ 
+    ssid = "WiFi" 
+    password = "WiFi PW" 
+ 
+    station = network.WLAN(network.STA_IF)
+ 
+    if station.isconnected() == True:
+        print("Already connected")
+        return
+ 
+    station.active(True)
+    station.connect(ssid, password)
+ 
+    while station.isconnected() == False:
+        pass
+ 
+    print("Connection successful")
+    print(station.ifconfig())
+    
+connect()
+
+
+# motion
+def motion_detected(pin):
+    
+    send_telegram_message("Motion is DETECTED, YAHOOO")
+    
+
+# Function to send a message to the Telegram chat
+def send_telegram_message(message):
+    url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
+    params = {'chat_id': CHAT_ID, 'text': message}
+    urequests.post(url, json=params)
+
+# Set up an interrupt on the GPIO pin for detecting motion
+pir_sensor_pin.irq(trigger=machine.Pin.IRQ_RISING, handler=motion_detected)
+
+try:
+    while True:
+        # Your main code can continue here
+        # For example, you can perform other tasks or sleep
+        time.sleep(1)
+except KeyboardInterrupt:
+    # Handle Ctrl+C to stop the code
+    pir_sensor_pin.irq(trigger=0)  # Disable the interrupt
+    print("Stopped by user")
+    
+
+
+
